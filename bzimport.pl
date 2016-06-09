@@ -1,0 +1,174 @@
+#!/usr/bin/perl -w
+###
+# Copyright (c) 2016 by condition-alpha.com  /  All rights reserved.
+###
+use strict;
+use warnings;
+use REST::Client;
+use Cpanel::JSON::XS qw(encode_json decode_json);
+use Text::CSV_XS;
+use Term::Prompt;
+#use Data::Dumper;  # for print debugging
+
+###
+#  read CSV file name from command line
+#
+if ($#ARGV != 0) {
+  print "Usage: bzimport.pl <filename>\n";
+  exit;
+}
+my $filename = $ARGV[0];
+
+###
+#  read descriptions of new bugs from file
+#
+my @bugs;
+my @parents;
+my @subtasks;
+# Read/parse CSV
+my $csv = Text::CSV_XS->new ({ binary => 1, auto_diag => 1 });
+open my $fh, "<:encoding(utf8)", $filename or die "\"".$filename."\": $!";
+print "Reading \"".$filename."\"...\n";
+my $product;
+my $component;
+my $summary;
+my $description;
+my $blocks;
+my $depends_on;
+my $milestone;
+my $version;
+my $os;
+my $platform;
+$csv->bind_columns (\$product, \$component, \$summary, \$description, \$blocks, \$depends_on, \$milestone, \$version, \$os, \$platform);
+while (my $row = $csv->getline ($fh)) {
+  unless (($product eq "Product") || ($product eq "")) {
+    my %bug = (
+	       product => $product,
+	       component => $component,
+	       summary => $summary,
+	       description => $description,
+	       version => (($version ne "") ? $version : 'unspecified')
+	      );
+    if ($milestone ne "") {
+      $bug{target_milestone} = $milestone;
+    }
+    if ($os ne "") {
+      $bug{op_sys} = $os;
+    }
+    if ($platform ne "") {
+      $bug{platform} = $platform;
+    }
+    push @bugs, \%bug;
+    # save dependencies for later
+    push @parents, ($blocks ne "") ? $blocks : "";
+    push @subtasks, ($depends_on ne "") ? $depends_on : "";
+  }
+}
+close $fh;
+if (not ($#bugs >= 0)) {
+  print "No valid new bugs for importing found in \"".$filename."\".\n";
+  exit;
+}
+print "Found ".($#bugs + 1)." valid new bugs in \"".$filename."\".\n";
+
+###
+#  instantiate REST client
+#
+my $client = REST::Client->new();
+my $request;
+my $request_json;
+my $response_json;
+my $response;
+my $bugzilla = prompt('x', 'Enter Bugzilla server URL:', '', '');
+$client->setHost($bugzilla);
+$client->addHeader('Accept', 'application/json');
+$client->addHeader('Content-Type', 'application/json');
+$client->setFollow(1);
+
+###
+#  check Bugzilla version
+#
+$client->GET('/rest/version');
+$response_json = $client->responseContent();
+if ($client->responseCode() != 200) {
+  print $bugzilla." responded to with HTTP status ".$client->responseCode()."\n";
+  print "It seems your server doesn't support the REST interface, or is not version 5.0 or newer.\n";
+  print $response_json."\n";
+  exit;
+}
+$response = decode_json $response_json;
+print $bugzilla." is version ".$response->{'version'}."\n";
+
+###
+#  log in to Bugzilla
+#
+my $user = prompt('x', 'Enter user name:', '', '',);
+my $pass = prompt('p', 'Enter password:', '', '',);
+my %credentials = (
+		   login => $user,
+		   password => $pass,
+		   restrict_login => 'true',
+		  );
+print "Logging in as user ".$user."\n";
+$client->request('GET', '/rest/login'.$client->buildQuery(%credentials));
+$response_json = $client->responseContent();
+if ($client->responseCode() != 200) {
+  print $bugzilla." responded with HTTP status ".$client->responseCode()."\n";
+  print "User authentication failed.\n";
+  print $response_json."\n";
+  exit;
+}
+$response = decode_json $response_json;
+my $token = $response->{'token'};
+my %auth_token = (
+		  token => $token,
+		 );
+print "Login successful\n";
+
+###
+#  file new bugs
+#
+my @bugids;
+my $bug_json;
+for my $i (0 .. $#bugs) {
+  print "New issue [".($i + 1)."] ";
+  $bug_json = encode_json $bugs[$i];
+  $client->request('POST', '/rest/bug'.$client->buildQuery(%auth_token), $bug_json);
+  $response_json = $client->responseContent();
+  if ($client->responseCode() != 200) {
+    print $bugzilla." responded to with HTTP status ".$client->responseCode()."\n";
+    print "Adding a new bug failed.\n";
+    print $response_json."\n";
+    exit;
+  }
+  $response = decode_json $response_json;
+  my $bugid = $response->{'id'};
+  print "filed as bug ".$bugid."\n";
+  push @bugids, $bugid;
+}
+
+###
+#  set the parent/children of the new bugs
+#
+print "Setting dependencies...\n";
+for my $i (0 .. $#bugids) {
+  my $update = {
+		ids => [ $bugids[$i] ],
+		blocks => {
+			   add => [ split(',', $parents[$i]) ],
+			  },
+		depends_on => {
+			   add => [ split(',', $subtasks[$i]) ],
+			  },
+	       };
+  my $update_json = encode_json $update;
+  $client->request('PUT', '/rest/bug/'.$bugids[0].$client->buildQuery(%auth_token), $update_json);
+  $response_json = $client->responseContent();
+    if ($client->responseCode() != 200) {
+    print $bugzilla." responded to with HTTP status ".$client->responseCode()."\n";
+    print "Setting dependencies failed.\n";
+    print $response_json."\n";
+    exit;
+  }
+  print "Added dependencies for bug [".$bugids[$i]."]\n";
+}
