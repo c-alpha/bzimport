@@ -33,13 +33,15 @@ my $product;
 my $component;
 my $summary;
 my $description;
+my $severity;
+my $priority;
 my $blocks;
 my $depends_on;
 my $milestone;
 my $version;
 my $os;
 my $platform;
-$csv->bind_columns (\$product, \$component, \$summary, \$description, \$blocks, \$depends_on, \$milestone, \$version, \$os, \$platform);
+$csv->bind_columns (\$product, \$component, \$summary, \$description, \$severity, \$priority, \$blocks, \$depends_on, \$milestone, \$version, \$os, \$platform);
 while (my $row = $csv->getline ($fh)) {
   unless (($product eq "Product") || ($product eq "")) {
     my %bug = (
@@ -49,6 +51,12 @@ while (my $row = $csv->getline ($fh)) {
 	       description => $description,
 	       version => (($version ne "") ? $version : 'unspecified')
 	      );
+    if ($severity ne "") {
+      $bug{severity} = $severity;
+    }
+    if ($priority ne "") {
+      $bug{priority} = $priority;
+    }
     if ($milestone ne "") {
       $bug{target_milestone} = $milestone;
     }
@@ -148,7 +156,7 @@ for my $i (0 .. $#bugs) {
 }
 
 ###
-#  set the parent/children of the new bugs
+#  set the parent/children of the new bugs (cannot set on creation, hence do an update)
 #
 print "Setting dependencies...\n";
 for my $i (0 .. $#bugids) {

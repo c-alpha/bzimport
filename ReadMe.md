@@ -22,14 +22,16 @@ Your CSV file must have the following 10 columns (all strings):
 2. Component (name of the product's component; **must not be empty**)
 3. Summary (the headline of the bug; **must not be empty**)
 4. Description (a prose description of the problem; **must not be empty**)
-5. Blocks (comma separated list of the bugs that this bug blocks; e.g. "1234,1543,2016"; can be empty)
-6. Depends On (comma separated list of the bugs that this bug depends on; e.g. "1234,1543,2016"; can be empty)
-7. Target Milestone (name of the target milestone for which this bug is to be fixed; can be empty)
-8. Version (product/component version that this bug applies to; can be empty)
-9. OS (operating system for which this bug is relevant; can be empty)
-10. Platform (hardware platform for which this bug is relevant; can be empty)
+5. Severity (how severe the bug is; e.g. "trivial")
+6. Priority (priority of this bug relative to other bugs; e.g. "P1")
+7. Blocks (comma separated list of the bugs that this bug blocks; e.g. "1234,1543,2016"; can be empty)
+8. Depends On (comma separated list of the bugs that this bug depends on; e.g. "1234,1543,2016"; can be empty)
+9. Target Milestone (name of the target milestone for which this bug is to be fixed; can be empty)
+10. Version (product/component version that this bug applies to; can be empty)
+11. OS (operating system for which this bug is relevant; can be empty)
+12. Platform (hardware platform for which this bug is relevant; can be empty)
 
-Except for summary and description, all field contents must match something that already exists in Bugzilla (e.g. a bug id, a configured version, a configure milestone, etc.). Otherwise Bugzilla will respond with an error, and import will halt.
+Except for summary and description, all field contents must match something that already exists in Bugzilla (e.g. a bug id, a configured version, a configure milestone, etc.). Before attempting an import, consult your Bugzilla installation for any customised values that can or must appear in fields. Otherwise Bugzilla will respond with an error, and import will halt.
 
 Lines with a product name of "Product" (usually the table header row) and an empty product name are ignored. Bugzilla does auto-linkification on the imported texts as usual; so if "bug 1234" occurs in the description, Bugzilla will convert it to a hyperlink to that bug (provided that a bug with that id exists).
 
