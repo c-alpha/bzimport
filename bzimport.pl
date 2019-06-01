@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 ###
 # Copyright (c) 2016 by condition-alpha.com  /  All rights reserved.
 ###
