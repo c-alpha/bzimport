@@ -1,6 +1,6 @@
 #!/usr/bin/env perl -w
 ###
-# Copyright (c) 2016 by condition-alpha.com  /  All rights reserved.
+# Copyright (c) 2016,2022 by condition-alpha.com  /  All rights reserved.
 ###
 use strict;
 use warnings;
@@ -105,33 +105,25 @@ if ($client->responseCode() != 200) {
   exit;
 }
 $response = decode_json $response_json;
-print $bugzilla." is version ".$response->{'version'}."\n";
+print "Good news: ".$bugzilla." is version ".$response->{'version'}."\n";
 
 ###
-#  log in to Bugzilla
+# request API key from user
+# https://bugzilla.readthedocs.io/en/latest/using/preferences.html#api-keys
 #
-my $user = prompt('x', 'Enter user name:', '', '',);
-my $pass = prompt('p', 'Enter password:', '', '',);
-my %credentials = (
-		   login => $user,
-		   password => $pass,
-		   restrict_login => 'true',
-		  );
-print "Logging in as user ".$user."\n";
-$client->request('GET', '/rest/login'.$client->buildQuery(%credentials));
+print "You can set up an API key by using the API Keys tab in Bugzilla's Preferences pages.\n";
+my $api_key = prompt('p', 'Enter the API key to use:', '', '',);
+print "\n";
+my %auth_token = (
+		  api_key => $api_key,
+		 );
+$client->GET('/rest/logout'.$client->buildQuery(%auth_token));
 $response_json = $client->responseContent();
 if ($client->responseCode() != 200) {
-  print $bugzilla." responded with HTTP status ".$client->responseCode()."\n";
-  print "User authentication failed.\n";
-  print $response_json."\n";
+  print $bugzilla." responded to with HTTP status ".$client->responseCode()."\n";
+  print "Did you use a valid API key?\n";
   exit;
 }
-$response = decode_json $response_json;
-my $token = $response->{'token'};
-my %auth_token = (
-		  token => $token,
-		 );
-print "Login successful\n";
 
 ###
 #  file new bugs
