@@ -1,12 +1,41 @@
 #!/usr/bin/env perl -w
-###
-# Copyright (c) 2016,2022 by condition-alpha.com  /  All rights reserved.
-###
+
+# Copyright notice
+# © 2016,2022 Condition-ALPHA. All rights reserved
+# 
+# This software and related documentation (the "Software") are
+# intellectual property owned by Condition-ALPHA and are copyright of
+# Condition-ALPHA, unless specifically noted otherwise.  Any use of the
+# Software is permitted only pursuant to the terms of the license
+# agreement, if any, which accompanies, is included with or applicable
+# to the Software ("License Agreement") or upon express written consent
+# of Condition-ALPHA. Any copying, reproduction or redistribution of the
+# Software in whole or in part by any means not in accordance with the
+# License Agreement or as agreed in writing by Condition-ALPHA is
+# expressly prohibited.
+# 
+# THE SOFTWARE IS WARRANTED, IF AT ALL, ONLY ACCORDING TO THE TERMS OF
+# THE LICENSE AGREEMENT. EXCEPT AS WARRANTED IN THE LICENSE AGREEMENT
+# THE SOFTWARE IS DELIVERED "AS IS" AND CONDITION-ALPHA HEREBY DISCLAIMS
+# ALL WARRANTIES AND CONDITIONS WITH REGARD TO THE SOFTWARE, INCLUDING
+# ALL IMPLIED WARRANTIES AND CONDITIONS OF MERCHANTABILITY, FITNESS FOR
+# A PARTICULAR PURPOSE, QUIT ENJOYMENT, TITLE AND NON-INFRINGEMENT OF
+# ANY THIRD PARTY INTELLECTUAL PROPERTY OR OTHER RIGHTS WHICH MAY RESULT
+# FROM THE USE OR THE INABILITY TO USE THE SOFTWARE.  IN NO EVENT SHALL
+# CONDITION-ALPHA BE LIABLE FOR INDIRECT, INCIDENTAL, CONSEQUENTIAL,
+# PUNITIVE, SPECIAL OR OTHER DAMAGES WHATSOEVER INCLUDING WITHOUT
+# LIMITATION, DAMAGES FOR LOSS OF BUSINESS PROFITS, BUSINESS
+# INTERRUPTION, LOSS OF BUSINESS INFORMATION, AND THE LIKE, ARISING OUT
+# OF OR RELATING TO THE USE OF OR THE INABILITY TO USE THE SOFTWARE,
+# EVEN IF CONDITION-ALPHA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+# DAMAGES, EXCEPT PERSONAL INJURY OR DEATH RESULTING FROM
+# CONDITION-ALPHA'S NEGLIGENCE.
+
 use strict;
 use warnings;
 use REST::Client;
 use Cpanel::JSON::XS qw(encode_json decode_json);
-use Text::CSV_XS;
+use Text::CSV;
 use Term::Prompt;
 #use Data::Dumper;  # for print debugging
 
@@ -26,7 +55,7 @@ my @bugs;
 my @parents;
 my @subtasks;
 # Read/parse CSV
-my $csv = Text::CSV_XS->new ({ binary => 1, auto_diag => 1 });
+my $csv = Text::CSV->new ({ binary => 1, auto_diag => 1 });
 open my $fh, "<:encoding(utf8)", $filename or die "\"".$filename."\": $!";
 print "Reading \"".$filename."\"...\n";
 my $product;

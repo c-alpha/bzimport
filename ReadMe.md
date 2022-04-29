@@ -38,5 +38,3 @@ Lines with a product name of "Product" (usually the table header row) and an emp
 ## Licence ##
 
 You may run the bzimport.pl script for any purpose, be it commercial or not. If you make modifications to it which might be useful for others, please consider submitting a pull request.
-
-If you want to distribute copies to others, you may do so under the [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
